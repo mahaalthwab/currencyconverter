@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>محول العملات</title>
+        <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="seo.png" type="seo.png">
+ 
+        <style>
+            /* الأنماط العامة */
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                background-color: #f5f5f5;
+                padding: 20px;
+                margin: 0;
+            }
+
+            .converter {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                display: inline-block;
+                max-width: 400px;
+                width: 100%;
+            }
+
+            h1 {
+                margin-bottom: 20px;
+                font-size: 1.5rem;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+            input, select, button {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                font-size: 1rem;
+            }
+
+            button {
+                background-color: #17056c;
+                color: white;
+                border: none;
+                cursor: pointer;
+                font-size: 1rem;
+            }
+
+            button:hover {
+                background-color: #5137e0;
+            }
+
+            #result {
+                margin-top: 20px;
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #333;
+            }
+
+            #myVideo {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                z-index: -1;
+            }
+
+            /* الأنماط المتجاوبة */
+            @media (max-width: 768px) {
+                .converter {
+                    padding: 15px;
+                    max-width: 90%;
+                }
+
+                h1 {
+                    font-size: 1.25rem;
+                }
+
+                input, select, button {
+                    font-size: 0.9rem;
+                    padding: 8px;
+                }
+
+                #result {
+                    font-size: 1rem;
+                }
+            }
+
+            @media (max-width: 480px) {
+                h1 {
+                    font-size: 1rem;
+                }
+
+                input, select, button {
+                    font-size: 0.8rem;
+                    padding: 6px;
+                }
+
+                #result {
+                    font-size: 0.9rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <video autoplay muted loop id="myVideo">
+            <source src="IMG_6069.MP4" type="video/mp4">
+            Your browser does not support HTML5 video.
+        </video> 
+
+        <div class="converter">
+            <h1>محول العملات</h1>
+            <div class="form-group">
+                <label for="fromCurrency">من العملة:</label>
+                <select id="fromCurrency"></select>
+            </div>
+            <div class="form-group">
+                <label for="toCurrency">إلى العملة:</label>
+                <select id="toCurrency"></select>
+            </div>
+            <div class="form-group">
+                <label for="amount">المبلغ:</label>
+                <input type="number" id="amount" placeholder="أدخل المبلغ">
+            </div>
+            <button id="convertButton">تحويل</button>
+            <div id="result"></div>
+        </div>
+        <script>
+            const fromCurrency = document.getElementById("fromCurrency");
+            const toCurrency = document.getElementById("toCurrency");
+            const amount = document.getElementById("amount");
+            const convertButton = document.getElementById("convertButton");
+            const result = document.getElementById("result");
+
+            // استرداد قائمة العملات
+            fetch("https://open.er-api.com/v6/latest/USD")
+                .then(response => response.json())
+                .then(data => {
+                    const currencies = Object.keys(data.rates);
+                    currencies.forEach(currency => {
+                        const optionFrom = document.createElement("option");
+                        const optionTo = document.createElement("option");
+                        optionFrom.value = currency;
+                        optionTo.value = currency;
+                        optionFrom.textContent = currency;
+                        optionTo.textContent = currency;
+                        fromCurrency.appendChild(optionFrom);
+                        toCurrency.appendChild(optionTo);
+                    });
+                });
+
+            // تنفيذ التحويل
+            convertButton.addEventListener("click", () => {
+                const from = fromCurrency.value;
+                const to = toCurrency.value;
+                const amountValue = parseFloat(amount.value);
+
+                if (!from || !to || isNaN(amountValue) || amountValue <= 0) {
+                    result.textContent = "يرجى إدخال بيانات صحيحة.";
+                    return;
+                }
+
+                fetch(`https://open.er-api.com/v6/latest/${from}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const rate = data.rates[to];
+                        if (rate) {
+                            const convertedAmount = (amountValue * rate).toFixed(2);
+                            result.textContent = `${amountValue} ${from} = ${convertedAmount} ${to}`;
+                        } else {
+                            result.textContent = "لم يتم العثور على سعر صرف.";
+                        }
+                    })
+                    .catch(() => {
+                        result.textContent = "حدث خطأ أثناء التحويل.";
+                    });
+            });
+        </script>
+    </body>
+</html>
